@@ -3,10 +3,12 @@ import sys
 import json
 import time
 import datetime
+import argparse
 from datetime import datetime, timezone
 
+# TYhe configuration is global!
 CONFIG = {}
-FILE_NAME = ''
+
 VERBOSE = False
 
 def generate_login_url():
@@ -39,7 +41,6 @@ def get_tokens():
     print('Refresh token: ' + refresh_token)
   CONFIG['nest']['access_token'] = access_token
   CONFIG['nest']['refresh_token'] = refresh_token
-  write_config()
   return
 
 def refresh_token():
@@ -56,7 +57,6 @@ def refresh_token():
   if VERBOSE:
     print('Access token: ' + access_token)
   CONFIG['nest']['access_token'] = access_token
-  write_config()
 
 def get_structures():
   # Get structures
@@ -109,49 +109,119 @@ def get_device_stats(device_name):
 
   return retval
 
-def get_config():
+def get_config(config_file_name):
   global CONFIG
-  json_config = open(FILE_NAME).read()
+  json_config = open(config_file_name).read()
   CONFIG = json.loads(json_config)
 
-def write_config():
+def write_config(config_file_name):
   global CONFIG
-  f = open(FILE_NAME, 'w')
+  f = open(config_file_name, 'w')
   f.write(json.dumps(CONFIG, indent = 2, separators=(',', ': ')))
 
 def mod_sleep(interval_secs):
-  ''' Sleep until the next even time in seconds. '''
+  '''
+  Sleep until the next even time in seconds. 
+  Except on the first call.
+  '''
+  if not hasattr(mod_sleep,"first_call"):
+    mod_sleep.first_call = True
+
+  if mod_sleep.first_call:
+    mod_sleep.first_call = False
+    return
+
   now = time.time()
   sleep_time = interval_secs - (now+interval_secs) % interval_secs - 0.002
   time.sleep(sleep_time)
 
+def arg_parse():
+  global VERBOSE
+  global FILE_NAME
+
+  parser = argparse.ArgumentParser(description='Nest to CHORDS.')
+
+  parser.add_argument('config_file', 
+                      help='the configuration file')
+  parser.add_argument('--interval', action='store',
+                      default=None, type=int,
+                      help='override the reporting interval (s)')
+  parser.add_argument('--new_code', action='store_const',
+                      const=True, default=False,
+                      help='create URL for obtaining a new access code')
+  parser.add_argument('--verbose', action='store_const',
+                      const=True, default=False,
+                      help='enable verbose output')
+  args = parser.parse_args()
+
+  # Set the globals
+  VERBOSE = args.verbose
+  FILE_NAME = args.config_file
+
+  return args
 
 def print_config():
   print(json.dumps(CONFIG, indent = 2, separators=(',', ': ')))
   print()
 
-if __name__ == '__main__':
-  FILE_NAME = sys.argv[1]
-  get_config()
-  print_config()
+def token_renew(config_file_name):
+  if not hasattr(token_renew,"last_renew_time"):
+      token_renew.last_renew_time=None
 
-  ans = input('Do you need to create new access and refresh tokens? [y/n] ')
-  if ans == 'y' or ans == 'Y':
+  if not token_renew.last_renew_time:
+    refresh_token()
+    write_config(config_file_name)
+    token_renew.last_renew_time = time.time()
+    print("tokens renewed")
+    return
+
+  # Tokens are good for 60 minutes, so renew close to then
+  if time.time() - token_renew.last_renew_time < 55*60:
+    return
+
+  refresh_token()
+  write_config(config_file_name)
+  token_renew.last_renew_time = time.time()
+  print("tokens renewed")
+  return
+
+  
+
+if __name__ == '__main__':
+
+  args = arg_parse()
+
+  get_config(args.config_file)
+  report_interval = CONFIG['nest']['report_interval']
+  if args.interval:
+    report_interval = args.interval
+
+  if VERBOSE:
+    print_config()
+
+  #ans = input('Do you need to create new access and refresh tokens? [y/n] ')
+  #if ans == 'y' or ans == 'Y':
+  if args.new_code:
     login_url = generate_login_url()
-    print('A login URL will be generated, that can be used to get a new code, for getting a new access code.')
-    print('To ger the code, browse through all of the screens until you get to your redirect_url.')
+    print()
+    print('A login URL will be generated, that can be used for getting a new access code.')
+    print('To get the code, browse through all of the screens until you get to your redirect_url.')
     print('Google added a query to end that looks like this: ...?code=4/.....&scope=...')
     print('Copy the part between code= and &scope= and add it to the code section in nest.json')
-    print("Go to this URL to log in:")
+    print()
+    print("Go to this URL, answering all of the consent pages, until you get to'"+CONFIG['nest']['redirect_uri']+"':")
+    print()
     print(login_url)
     print()
-    input('Hit return after you have added the new code into ' + FILE_NAME)
-    get_config()
+    input('Hit return after you have added the new code into ' + args.config_file)
+    get_config(args.config_file)
     get_tokens()
+    write_config(args.config_file)
     print('The new configuration:')
     print_config()
 
-  refresh_token()
+  token_renew(args.config_file)
+
   if VERBOSE:
     print('The refreshed tokens')
     print_config()
@@ -160,14 +230,9 @@ if __name__ == '__main__':
 
   device_name = get_devices()
 
-  count = 0
-  first = True
   while (1):
-    if not first:
-      mod_sleep(CONFIG['nest']['report_interval'])
+    # Sleep until the next reporting time
+    mod_sleep(report_interval)
     print(get_device_stats(device_name))
-    first = False
-    count = count + 1
-    if count > 55:
-      refresh_token()
-      count = 0
+    token_renew(args.config_file)
+
