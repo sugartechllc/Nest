@@ -1,4 +1,9 @@
 {
+  "README": [
+    "There are two sections.",
+    "  chords: is for configuration of the CHORDS connection.",
+    "  nest: is for configuration of the Nest API connection."
+  ],
   "chords": {
     "host": "chords host"
   },
