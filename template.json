@@ -1,0 +1,15 @@
+{
+  "chords": {
+    "host": "chords host"
+  },
+  "nest": {
+    "report_interval": 60,
+    "project_id": "The Device Access Console (console.nest.google.com) Project ID",
+    "client_id": "The GCP (console.cloud.google.com->APIs) Oauth 2.0 Client ID",
+    "client_secret": "The GCP (console.cloud.google.com->APIs) Oauth 2.0 Client Secret",
+    "redirect_uri": "https://www.google.com",
+    "code": "The access code delivered in the URL to the redirect_api, after passing the consent/login screens",
+    "access_token": "Access token fetched by the app when first requesting tokens (automatically added to this file)",
+    "refresh_token": "Refresh token fetched by the app when first requesting tokens (automatically added to this file)"
+  }
+}
