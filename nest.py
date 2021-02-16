@@ -210,6 +210,8 @@ if __name__ == '__main__':
   print("Starting", sys.argv)
 
   get_config(args.config_file)
+
+  # Handle a reporting interval overide.
   report_interval = CONFIG['nest']['report_interval']
   if args.interval:
     report_interval = args.interval
@@ -217,19 +219,27 @@ if __name__ == '__main__':
   if VERBOSE:
     print_config()
 
+  # Get a new authorization code, if requested.
   if args.new_code:
     new_code(args)
 
+  # Renewing the tokens is a routine activity.
+  # Tokens are good for 60 minutes.
   token_renew(args.config_file)
 
   if VERBOSE:
     print('The refreshed tokens')
     print_config()
 
+  # Get the avaiable Nest structures.
+  # Enable verbose to view them.
   get_structures()
 
+  # Get the Nest devices. For now we will just use the first one listed.
+  # Turn on verbose to list all of them.
   device_name = get_devices()
 
+  # The query loop.
   while (1):
     # Sleep until the next reporting time
     mod_sleep(report_interval)
