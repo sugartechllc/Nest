@@ -5,6 +5,7 @@ import time
 import datetime
 import argparse
 from datetime import datetime, timezone
+import pychords.tochords as tochords
 
 # TYhe configuration is global!
 CONFIG = {}
@@ -184,21 +185,7 @@ def token_renew(config_file_name):
   print("tokens renewed")
   return
 
-if __name__ == '__main__':
-
-  args = arg_parse()
-
-  get_config(args.config_file)
-  report_interval = CONFIG['nest']['report_interval']
-  if args.interval:
-    report_interval = args.interval
-
-  if VERBOSE:
-    print_config()
-
-  #ans = input('Do you need to create new access and refresh tokens? [y/n] ')
-  #if ans == 'y' or ans == 'Y':
-  if args.new_code:
+def new_code(args):
     login_url = generate_login_url()
     print()
     print('A login URL will be generated, that can be used for getting a new access code.')
@@ -216,6 +203,22 @@ if __name__ == '__main__':
     write_config(args.config_file)
     print('The new configuration:')
     print_config()
+
+if __name__ == '__main__':
+
+  args = arg_parse()
+  print("Starting", sys.argv)
+
+  get_config(args.config_file)
+  report_interval = CONFIG['nest']['report_interval']
+  if args.interval:
+    report_interval = args.interval
+
+  if VERBOSE:
+    print_config()
+
+  if args.new_code:
+    new_code(args)
 
   token_renew(args.config_file)
 
