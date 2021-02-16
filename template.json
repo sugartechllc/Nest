@@ -9,7 +9,7 @@
   },
   "nest": {
     "report_interval": 60,
-    "project_id": "The Device Access Console (console.nest.google.com) Project ID",
+    "project_id": "The SDM Device Access Console (console.nest.google.com) Project ID",
     "client_id": "The GCP (console.cloud.google.com->APIs) Oauth 2.0 Client ID",
     "client_secret": "The GCP (console.cloud.google.com->APIs) Oauth 2.0 Client Secret",
     "redirect_uri": "https://www.google.com",

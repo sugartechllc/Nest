@@ -156,7 +156,6 @@ def arg_parse():
 
   # Set the globals
   VERBOSE = args.verbose
-  FILE_NAME = args.config_file
 
   return args
 
@@ -184,8 +183,6 @@ def token_renew(config_file_name):
   token_renew.last_renew_time = time.time()
   print("tokens renewed")
   return
-
-  
 
 if __name__ == '__main__':
 
