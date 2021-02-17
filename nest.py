@@ -87,7 +87,7 @@ def get_devices():
   return device_0_name
 
 def get_device_stats(device_name):
-  time_stamp = datetime.now(timezone.utc).isoformat()
+  time_stamp = datetime.now(timezone.utc).isoformat()[:-10]+'Z'
   # Get device stats
   url_get_device = 'https://smartdevicemanagement.googleapis.com/v1/' + device_name
   headers = {
@@ -100,15 +100,79 @@ def get_device_stats(device_name):
   response_json = response.json()
   retval = {}
   retval['time'] = time_stamp
-  retval['status'] = response_json['traits']['sdm.devices.traits.ThermostatHvac']['status']
-  retval['mode'] = response_json['traits']['sdm.devices.traits.ThermostatMode']['mode']
-  retval['tempC'] = response_json['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius']
-  retval['tempF'] = retval['tempC']*9.0/5.0 + 32.0
   retval['RH']  = response_json['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent']
+  retval['mode'] = response_json['traits']['sdm.devices.traits.ThermostatMode']['mode']
   retval['ecomode'] = response_json['traits']['sdm.devices.traits.ThermostatEco']['mode']
-  #retval['setpointC'] = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint']['heatCelsius']
+  retval['status'] = response_json['traits']['sdm.devices.traits.ThermostatHvac']['status']
+  setpointC = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('heatCelsius')
+  if setpointC:
+    retval['setpointC'] = setpointC
+  retval['tempC'] = response_json['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius']
 
   return retval
+
+def status_translate():
+  '''
+    "sdm.devices.traits.Info": {
+      "customName": ""
+    },
+
+    "sdm.devices.traits.Humidity": {
+      "ambientHumidityPercent": 30
+    },
+    *** rh: ambientHumidityPercent
+
+    "sdm.devices.traits.Connectivity": {
+      "status": "ONLINE"
+    },
+
+    "sdm.devices.traits.Fan": {
+      "timerMode": "OFF"
+    },
+
+    "sdm.devices.traits.ThermostatMode": {
+      "mode": "HEAT",
+      "availableModes": [
+        "HEAT",
+        "COOL",
+        "HEATCOOL",
+        "OFF"
+      ]
+    },
+    *** mode: HEAT, COOL, HEATCOOL, OFF
+
+    "sdm.devices.traits.ThermostatEco": {
+      "availableModes": [
+        "OFF",
+        "MANUAL_ECO"
+      ],
+      "mode": "OFF",
+      "heatCelsius": 4.5,
+      "coolCelsius": 24.444443
+    },
+    *** ecomode: OFF, MANUAL_ECO
+
+    "sdm.devices.traits.ThermostatHvac": {
+      "status": "HEATING"
+    },
+    *** status: OFF, HEATING, COOLING
+
+    "sdm.devices.traits.Settings": {
+      "temperatureScale": "FAHRENHEIT"
+    },
+
+    "sdm.devices.traits.ThermostatTemperatureSetpoint": {
+      "heatCelsius": 10.121735
+    },
+    *** setpointC: heatCelsius
+
+    "sdm.devices.traits.Temperature": {
+      "ambientTemperatureCelsius": 4.719986
+    }
+    *** tempC: ambientTemperatureCelsius
+  },
+  '''
+  pass
 
 def get_config(config_file_name):
   global CONFIG
@@ -204,10 +268,30 @@ def new_code(args):
     print('The new configuration:')
     print_config()
 
+def make_chords_vars(old_hash, replace_keys):
+    """
+    Rename the keys in a hash. If an old key does not
+    exist in the new_keys, remove it.
+    """
+    new_hash = {}
+    for old_key, old_val in old_hash.items():
+        if old_key in replace_keys:
+            new_hash[replace_keys[old_key]] = old_val
+
+    # The chords library wants the vars in a separate dict
+    new_hash = {"vars": new_hash}
+    return new_hash
+
 if __name__ == '__main__':
 
   args = arg_parse()
   print("Starting", sys.argv)
+
+  new_keys = {
+      'time': 'at',
+      'tempC': 'tdry',
+      'RH': 'rh'
+  }
 
   get_config(args.config_file)
 
@@ -239,10 +323,25 @@ if __name__ == '__main__':
   # Turn on verbose to list all of them.
   device_name = get_devices()
 
+  # Start the CHORDS sender thread
+  tochords.startSender()
+
   # The query loop.
   while (1):
     # Sleep until the next reporting time
     mod_sleep(report_interval)
-    print(get_device_stats(device_name))
+    nest_data = get_device_stats(device_name)
+    # Make a chords variable dict to send to chords
+    chords_record = make_chords_vars(nest_data, new_keys)
+    # Merge in the chords options
+    chords_record.update(CONFIG['chords'])
+    # create the chords uri
+    uri = tochords.buildURI(CONFIG['chords']['host'], chords_record)
+    print(uri)
+    # Send it to chords
+    tochords.submitURI(uri, 10*24*60)
+
+    print(nest_data)
+    #print(chords_record)
     token_renew(args.config_file)
 

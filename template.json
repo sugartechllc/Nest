@@ -5,7 +5,11 @@
     "  nest: is for configuration of the Nest API connection."
   ],
   "chords": {
-    "host": "chords host"
+    "skey": "The CORDS instrument access key",
+    "host": "The CHORDS host",
+    "enabled": true,
+    "inst_id": "instrument-id (number)",
+    "test": false
   },
   "nest": {
     "report_interval": 60,
