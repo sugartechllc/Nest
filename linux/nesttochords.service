@@ -1,0 +1,16 @@
+
+[Unit]
+Description=Nest to CHORDS Service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+User=pi
+Restart=always
+RestartSec=5
+Type=simple
+WorkingDirectory=/home/pi/Nest
+ExecStart=/usr/bin/python3 /home/pi/Nest/nest.py /home/pi/Nest/nest.json
+
+[Install]
+WantedBy=multi-user.target
