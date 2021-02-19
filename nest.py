@@ -11,6 +11,7 @@ import pychords.tochords as tochords
 CONFIG = {}
 
 VERBOSE = False
+TEST=False
 
 def generate_login_url():
   url = 'https://nestservices.google.com/partnerconnections/'+ \
@@ -202,7 +203,7 @@ def mod_sleep(interval_secs):
 
 def arg_parse():
   global VERBOSE
-  global FILE_NAME
+  global TEST
 
   parser = argparse.ArgumentParser(description='Nest to CHORDS.')
 
@@ -217,10 +218,18 @@ def arg_parse():
   parser.add_argument('--verbose', action='store_const',
                       const=True, default=False,
                       help='enable verbose output')
+  parser.add_argument('--test', action='store_const',
+                      const=True, default=False,
+                      help='test mode (do not forward data)')
   args = parser.parse_args()
 
   # Set the globals
   VERBOSE = args.verbose
+  TEST = args.test
+
+  if VERBOSE:
+    print(args)
+    print()
 
   return args
 
@@ -339,7 +348,8 @@ if __name__ == '__main__':
     uri = tochords.buildURI(CONFIG['chords']['host'], chords_record)
     print(uri)
     # Send it to chords
-    tochords.submitURI(uri, 10*24*60)
+    if not TEST:
+      tochords.submitURI(uri, 10*24*60)
 
     print(nest_data)
     #print(chords_record)
