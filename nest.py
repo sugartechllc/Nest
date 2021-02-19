@@ -87,7 +87,7 @@ def get_devices():
     print(device_0_name)
   return device_0_name
 
-def get_device_stats(device_name):
+def get_device_traits(device_name):
   time_stamp = datetime.now(timezone.utc).isoformat()[:-10]+'Z'
   # Get device stats
   url_get_device = 'https://smartdevicemanagement.googleapis.com/v1/' + device_name
@@ -105,75 +105,53 @@ def get_device_stats(device_name):
   retval['mode'] = response_json['traits']['sdm.devices.traits.ThermostatMode']['mode']
   retval['ecomode'] = response_json['traits']['sdm.devices.traits.ThermostatEco']['mode']
   retval['status'] = response_json['traits']['sdm.devices.traits.ThermostatHvac']['status']
-  setpointC = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('heatCelsius')
-  if setpointC:
-    retval['setpointC'] = setpointC
+  heatSetpt = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('heatCelsius')
+  if heatSetpt:
+    retval['heatSetpt'] = heatSetpt
+  coolSetpt = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('coolCelsius')
+  if coolSetpt:
+    retval['coolSetpt'] = coolSetpt
   retval['tempC'] = response_json['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius']
 
   return retval
 
-def status_translate():
+def nest_to_chords(nest_traits):
   '''
-    "sdm.devices.traits.Info": {
-      "customName": ""
-    },
-
-    "sdm.devices.traits.Humidity": {
-      "ambientHumidityPercent": 30
-    },
-    *** rh: ambientHumidityPercent
-
-    "sdm.devices.traits.Connectivity": {
-      "status": "ONLINE"
-    },
-
-    "sdm.devices.traits.Fan": {
-      "timerMode": "OFF"
-    },
-
-    "sdm.devices.traits.ThermostatMode": {
-      "mode": "HEAT",
-      "availableModes": [
-        "HEAT",
-        "COOL",
-        "HEATCOOL",
-        "OFF"
-      ]
-    },
-    *** mode: HEAT, COOL, HEATCOOL, OFF
-
-    "sdm.devices.traits.ThermostatEco": {
-      "availableModes": [
-        "OFF",
-        "MANUAL_ECO"
-      ],
-      "mode": "OFF",
-      "heatCelsius": 4.5,
-      "coolCelsius": 24.444443
-    },
-    *** ecomode: OFF, MANUAL_ECO
-
-    "sdm.devices.traits.ThermostatHvac": {
-      "status": "HEATING"
-    },
-    *** status: OFF, HEATING, COOLING
-
-    "sdm.devices.traits.Settings": {
-      "temperatureScale": "FAHRENHEIT"
-    },
-
-    "sdm.devices.traits.ThermostatTemperatureSetpoint": {
-      "heatCelsius": 10.121735
-    },
-    *** setpointC: heatCelsius
-
-    "sdm.devices.traits.Temperature": {
-      "ambientTemperatureCelsius": 4.719986
-    }
-    *** tempC: ambientTemperatureCelsius
-  },
+  Convert the text based device traits to desired CHORDS integer values.
+  Other numeric nest traits are retained with their original keys and values.
+  The canonical trait descriptions are at: https://developers.google.com/nest/device-access/api/thermostat?hl=en_US
   '''
-  pass
+
+  modes = {
+    'UNKNOWN': 0,
+    'OFF': 1,
+    'HEAT': 2,
+    'COOL': 3,
+    'HEATCOOL': 4
+  }
+
+  status = {
+    'UNKNOWN': 0,
+    'OFF': 1,
+    'HEATING': 2,
+    'COOLING': 3
+  }
+
+  chords_traits = nest_traits
+
+  # Mode
+  if modes.get(nest_traits['mode']):
+    chords_traits['mode'] = modes[nest_traits['mode']]
+  else:
+    chords_traits['mode'] = modes['UNKNOWN']
+  
+  # Status
+  if status.get(nest_traits['status']):
+    chords_traits['status'] = status[nest_traits['status']]
+  else:
+    chords_traits['status'] = status['UNKNOWN']
+
+  return chords_traits
 
 def get_config(config_file_name):
   global CONFIG
@@ -299,7 +277,11 @@ if __name__ == '__main__':
   new_keys = {
       'time': 'at',
       'tempC': 'tdry',
-      'RH': 'rh'
+      'RH': 'rh',
+      'mode': 'mode',
+      'status': 'status',
+      'heatSetpt': 'heatspt',
+      'coolSetpt': 'coolspt'
   }
 
   get_config(args.config_file)
@@ -340,11 +322,12 @@ if __name__ == '__main__':
     # Sleep until the next reporting time
     mod_sleep(report_interval)
 
-    nest_data = get_device_stats(device_name)
-    print(nest_data)
+    nest_traits = get_device_traits(device_name)
+    print(nest_traits)
+    chords_traits = nest_to_chords(nest_traits)
 
     # Make a chords variable dict to send to chords
-    chords_record = make_chords_vars(nest_data, new_keys)
+    chords_record = make_chords_vars(chords_traits, new_keys)
     # Merge in the chords options
     chords_record.update(CONFIG['chords'])
     # create the chords uri
