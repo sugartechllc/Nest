@@ -339,7 +339,10 @@ if __name__ == '__main__':
   while (1):
     # Sleep until the next reporting time
     mod_sleep(report_interval)
+
     nest_data = get_device_stats(device_name)
+    print(nest_data)
+
     # Make a chords variable dict to send to chords
     chords_record = make_chords_vars(nest_data, new_keys)
     # Merge in the chords options
@@ -347,11 +350,10 @@ if __name__ == '__main__':
     # create the chords uri
     uri = tochords.buildURI(CONFIG['chords']['host'], chords_record)
     print(uri)
+
     # Send it to chords
     if not TEST:
       tochords.submitURI(uri, 10*24*60)
 
-    print(nest_data)
-    #print(chords_record)
     token_renew(args.config_file)
 
