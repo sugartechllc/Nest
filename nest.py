@@ -306,8 +306,8 @@ if __name__ == '__main__':
       'heatSetpt': 'heatspt',
       'coolSetpt': 'coolspt',
       'ecomode': 'ecomode',
-      'heatCelsius': 'ecoheatsp',
-      'coolCelsius': 'ecocoolsp'
+      'heatCelsius': 'ecoheat',
+      'coolCelsius': 'ecocool'
   }
 
   get_config(args.config_file)
