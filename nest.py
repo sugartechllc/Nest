@@ -98,20 +98,31 @@ def get_device_traits(device_name):
   response = requests.get(url_get_device, headers=headers)
   if VERBOSE:
     print(json.dumps(response.json(), indent = 2, separators=(',', ': ')))
+
   response_json = response.json()
   retval = {}
   retval['time'] = time_stamp
   retval['RH']  = response_json['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent']
   retval['mode'] = response_json['traits']['sdm.devices.traits.ThermostatMode']['mode']
-  retval['ecomode'] = response_json['traits']['sdm.devices.traits.ThermostatEco']['mode']
   retval['status'] = response_json['traits']['sdm.devices.traits.ThermostatHvac']['status']
+
   heatSetpt = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('heatCelsius')
   if heatSetpt:
     retval['heatSetpt'] = heatSetpt
   coolSetpt = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('coolCelsius')
   if coolSetpt:
     retval['coolSetpt'] = coolSetpt
+
   retval['tempC'] = response_json['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius']
+
+  retval['ecomode'] = response_json['traits']['sdm.devices.traits.ThermostatEco']['mode']
+
+  heatCelsius = response_json['traits']['sdm.devices.traits.ThermostatEco'].get('heatCelsius')
+  if heatCelsius:
+    retval['heatCelsius'] = heatCelsius
+  coolCelsius = response_json['traits']['sdm.devices.traits.ThermostatEco'].get('coolCelsius')
+  if coolCelsius:
+    retval['coolCelsius'] = coolCelsius
 
   return retval
 
@@ -137,6 +148,12 @@ def nest_to_chords(nest_traits):
     'COOLING': 3
   }
 
+  eco_modes = {
+    'UNKNOWN': 0,
+    'OFF': 1,
+    'MANUAL_ECO': 2
+  }
+
   chords_traits = nest_traits
 
   # Mode
@@ -150,6 +167,12 @@ def nest_to_chords(nest_traits):
     chords_traits['status'] = status[nest_traits['status']]
   else:
     chords_traits['status'] = status['UNKNOWN']
+  
+  # Eco
+  if eco_modes.get(nest_traits['ecomode']):
+    chords_traits['ecomode'] = eco_modes[nest_traits['ecomode']]
+  else:
+    chords_traits['ecomode'] = eco_modes['UNKNOWN']
 
   return chords_traits
 
@@ -281,7 +304,10 @@ if __name__ == '__main__':
       'mode': 'mode',
       'status': 'status',
       'heatSetpt': 'heatspt',
-      'coolSetpt': 'coolspt'
+      'coolSetpt': 'coolspt',
+      'ecomode': 'ecomode',
+      'heatCelsius': 'ecoheatsp',
+      'coolCelsius': 'ecocoolsp'
   }
 
   get_config(args.config_file)
