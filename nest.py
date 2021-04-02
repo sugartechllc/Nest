@@ -15,7 +15,7 @@ TEST=False
 
 def generate_login_url():
   url = 'https://nestservices.google.com/partnerconnections/'+ \
-    CONFIG['nest']['project_id']+'/auth?redirect_uri='+ \
+    CONFIG['nest']['nest_console_project_id']+'/auth?redirect_uri='+ \
     CONFIG['nest']['redirect_uri']+ \
     '&access_type=offline&prompt=consent&client_id='+ \
     CONFIG['nest']['client_id']+ \
@@ -54,6 +54,8 @@ def refresh_token():
       ('grant_type', 'refresh_token'),
   )
   response = requests.post('https://www.googleapis.com/oauth2/v4/token', params=params)
+  if VERBOSE:
+    print(json.dumps(response.json(), indent = 2, separators=(',', ': ')))
   response_json = response.json()
   access_token = response_json['token_type'] + ' ' + response_json['access_token']
   if VERBOSE:
@@ -62,7 +64,7 @@ def refresh_token():
 
 def get_structures():
   # Get structures
-  url_structures = 'https://smartdevicemanagement.googleapis.com/v1/enterprises/' + CONFIG['nest']['project_id'] + '/structures'
+  url_structures = 'https://smartdevicemanagement.googleapis.com/v1/enterprises/' + CONFIG['nest']['nest_console_project_id'] + '/structures'
   headers = {
       'Content-Type': 'application/json',
       'Authorization': CONFIG['nest']['access_token'],
@@ -73,7 +75,7 @@ def get_structures():
 
 def get_devices():
   # Get devices
-  url_get_devices = 'https://smartdevicemanagement.googleapis.com/v1/enterprises/' + CONFIG['nest']['project_id'] + '/devices'
+  url_get_devices = 'https://smartdevicemanagement.googleapis.com/v1/enterprises/' + CONFIG['nest']['nest_console_project_id'] + '/devices'
   headers = {
       'Content-Type': 'application/json',
       'Authorization': CONFIG['nest']['access_token'],
