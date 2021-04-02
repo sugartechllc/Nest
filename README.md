@@ -3,8 +3,9 @@ Nest Thermostat Data to CHORDS
 
 - This uses the Google Cloud API to drag data from a Nest thermostat and 
   send it into a CHORDS portal. The Nest access is managed through "Google Cloud Platform".
-- The Nest API was migrated from the Nest company to the Google API sometime in
-  2020, so disregard anything you see about "Works With Nest".
+- Note: the Nest API was migrated from the Nest company to the Google API
+  sometime in 2020, so disregard anything you see on the Internet about
+  "Works With Nest".
 - The Google API ecosystem is wide and deep, and it took a lot of work to figure it out.
   The biggest challenge was getting the OAuth2 authentication going. Programatically managing authorization codes and so on for OAuth2 is non-trivial. 
 
@@ -12,25 +13,24 @@ Nest Thermostat Data to CHORDS
 You will need to [register as a Google developer](https://developers.google.com/nest/device-access/registration), $5.
 
 ## Resources
-I started with material from Wouter Nieuwerth, but I had to do a lot to get to my final product:
+I started with material from WN, but I had to do a lot to get to my final product:
 
-Step-by-step for [creating a Google project](https://www.wouternieuwerth.nl/controlling-a-google-nest-thermostat-with-python/) with the tokens.
+His step-by-step for [creating a Google project](https://www.wouternieuwerth.nl/controlling-a-google-nest-thermostat-with-python/) with the tokens.
 
 His [material](https://colab.research.google.com/github/WouterNieuwerth/Google-Nest-thermostat-API-example/blob/main/Google_Nest_API_thermostat_example.ipynb) on Github.
 
-Google Nest Thermostat [traits and settable modes](https://developers.google.com/nest/device-access/api/thermostat?hl=en_US).
+Here are Google Nest Thermostat [traits and settable modes](https://developers.google.com/nest/device-access/api/thermostat?hl=en_US).
 ## Workflow
 This is the workflow to make this all work:
 
-1. Creating a new project on [Google Cloud Platform](https://console.cloud.google.com), 
+1. Create a new project on [Google Cloud Platform](https://console.cloud.google.com), 
    configuring OAuth2 credentials, and enabling the Smart Device Management (SDM) API.
-1. Using the [Google Device Access Console](https:/console.nest.google.com) to
+1. Use the [Google Device Access Console](https:/console.nest.google.com) to
    give access to the Google API.
-1. Creating a URL which is used to get an authorization code for Nest. This
+1. Create a URL which is used to get an authorization code for Nest. This
    is done with the `--new` option to `nest.py`.
-1. Plugging in the authorization code in a second http request, which will
-   return access and refresh tokens. This is done while `nest.py` is still running in 
-   new mode.
+1. Plug the authorization code into a second http request, which will
+   return access and refresh tokens. This is done while `nest.py` is still running in new mode.
 1. Finally, the access token may be used to get Nest data, and the refresh token
    can be used to refresh the access token.
 
@@ -48,6 +48,8 @@ This is the workflow to make this all work:
    - App name
    - Support email
    - Developer email
+   - Note: if you add 'test users', the project is put into 
+     test mode, and the authorization must be renewed once a week.
 1. Go to the Credentials tab in the APIs & Services
    - Mash “+ Create Credentials”, and select “Create OAuth Client ID”
       - Application type: Web application
@@ -55,6 +57,7 @@ This is the workflow to make this all work:
       - Authorized redirect URI `https://www.google.com` (this is where the consent screens will finally dump you; you will grab the authorization code from the URL of this page)
 1. A popup will display the client ID and client secret. You can find these later on
    the same credentials tab.
+1. Hit the "Publish App" button.
 1. Go to the Dashboard tab.
    - Select “+ Enable APIS AND SERVICES”. 
    - Search for “Smart …”Select “Smart Device Management API”
