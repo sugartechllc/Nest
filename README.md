@@ -1,2 +1,88 @@
 # Nest
-Nest SDM access.
+Nest Thermostat Data to CHORDS
+
+- This uses the Google Cloud API to drag data from a Nest thermostat and 
+  send it into a CHORDS portal. The Nest access is managed through "Google Cloud Platform".
+- The Nest API was migrated from the Nest company to the Google API sometime in
+  2020, so disregard anything you see about "Works With Nest".
+- The Google API ecosystem is wide and deep, and it took a lot of work to figure it out.
+  The biggest challenge was getting the OAuth2 authentication going. Programatically managing authorization codes and so on for OAuth2 is non-trivial. 
+
+## Developer
+You will need to [register as a Google developer](https://developers.google.com/nest/device-access/registration), $5.
+
+## Resources
+I started with material from Wouter Nieuwerth, but I had to do a lot to get to my final product:
+
+Step-by-step for [creating a Google project](https://www.wouternieuwerth.nl/controlling-a-google-nest-thermostat-with-python/) with the tokens.
+
+His [material](https://colab.research.google.com/github/WouterNieuwerth/Google-Nest-thermostat-API-example/blob/main/Google_Nest_API_thermostat_example.ipynb) on Github.
+
+Google Nest Thermostat [traits and settable modes](https://developers.google.com/nest/device-access/api/thermostat?hl=en_US).
+## Workflow
+This is the workflow to make this all work:
+
+1. Creating a new project on [Google Cloud Platform](https://console.cloud.google.com), 
+   configuring OAuth2 credentials, and enabling the Smart Device Management (SDM) API.
+1. Using the [Google Device Access Console](https:/console.nest.google.com) to
+   give access to the Google API.
+1. Creating a URL which is used to get an authorization code for Nest. This
+   is done with the `--new` option to `nest.py`.
+1. Plugging in the authorization code in a second http request, which will
+   return access and refresh tokens. This is done while `nest.py` is still running in 
+   new mode.
+1. Finally, the access token may be used to get Nest data, and the refresh token
+   can be used to refresh the access token.
+
+## Setup Google API and OAuth 2.0
+
+1. Create a new project in [Google Cloud Platform](https://console.cloud.google.com):
+   - Create Resource->New Project. 
+   - Once created,
+   go to the dashboard for that project.
+1. Go to the APIs->APIs overview.
+1. Go to the OAuth Consent Screen tab. This is about the consent screen that the
+   users will see in order to get a token to access the api. Make these settings
+   on the configuration pages (everything else left blank):
+   - External: checked
+   - App name
+   - Support email
+   - Developer email
+1. Go to the Credentials tab in the APIs & Services
+   - Mash “+ Create Credentials”, and select “Create OAuth Client ID”
+      - Application type: Web application
+      - Name: Whatever you want
+      - Authorized redirect URI `https://www.google.com` (this is where the consent screens will finally dump you; you will grab the authorization code from the URL of this page)
+1. A popup will display the client ID and client secret. You can find these later on
+   the same credentials tab.
+1. Go to the Dashboard tab.
+   - Select “+ Enable APIS AND SERVICES”. 
+   - Search for “Smart …”Select “Smart Device Management API”
+   - Mash “Enable”
+
+## Enable Access to Smart Data Management
+1. Create a new project in the [Google Device Access Console](https:/console.nest.google.com).
+   - Enter the OAuth Client ID
+   - Enable the pub/sub topic.
+
+## Getting nest.py Running
+1. Edit nest.json, setting the following fields:
+   - nest_console_project_id: the project id from the Device Access project.
+   - client_secret: the OAuth client secret
+   - client_id: the OAuth client id.
+
+1. Intial run:
+   - `python3 nest.py nest.json --new`
+   - The program will pause after printing a URL. Open that URL in a browser, and
+     click through everything, allowing acess, until you get to a blank google page.
+     There will be many warnings about unverified application and so on. At one point
+     you will need to select an 'advanced' button in order to continue.
+   - Get the final URL from the browser address bar, and extract the authorization code
+     from it. Enter this as the 'code' token in nest.json.
+   - Hit return for nest.py. The program will now fetch access and refresh tokens, add them
+     to nest.json, and then start fetching data from the thermostat.
+
+2. Following runs:
+   - `python3 nest.py nest.json`
+   - The program will run using the existing access token. Every hour it will use the
+     the refresh token to renew the access token, rewriting nest.json with the new one.
