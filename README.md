@@ -2,7 +2,7 @@
 Nest Thermostat Data to CHORDS
 
 - This uses the Google Cloud API to drag data from a Nest thermostat and 
-  send it into a [CHORDS portal](https://chordsrt.com). The Nest access is managed through "Google Cloud Platform".
+  send it into a [CHORDS portal](https://earthcubeprojects-chords.github.io/chords-docs/). The Nest access is managed through "Google Cloud Platform".
 - Note: the Nest API was migrated from the Nest company to the Google API
   sometime in 2020, so disregard anything you see on the Internet about
   "Works With Nest".
