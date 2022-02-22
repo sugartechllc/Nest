@@ -6,6 +6,8 @@
   ],
   "chords": {
     "skey": "The CORDS instrument access key",
+    "api_email": "CHORDS user email",
+    "api_key": "CHORDS user api key",
     "host": "The CHORDS host",
     "enabled": true,
     "inst_id": "instrument-id (number)",
