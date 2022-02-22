@@ -2,7 +2,7 @@
 Nest Thermostat Data to CHORDS
 
 - This uses the Google Cloud API to drag data from a Nest thermostat and 
-  send it into a CHORDS portal. The Nest access is managed through "Google Cloud Platform".
+  send it into a [CHORDS portal](https://earthcubeprojects-chords.github.io/chords-docs/). The Nest access is managed through "Google Cloud Platform".
 - Note: the Nest API was migrated from the Nest company to the Google API
   sometime in 2020, so disregard anything you see on the Internet about
   "Works With Nest".
@@ -48,7 +48,7 @@ This is the workflow to make this all work:
    - App name
    - Support email
    - Developer email
-   - Note: if you add 'test users', the project is put into 
+   - Note: don't add 'test users'; if you do the project is put into 
      test mode, and the authorization must be renewed once a week.
 1. Go to the Credentials tab in the APIs & Services
    - Mash “+ Create Credentials”, and select “Create OAuth Client ID”
