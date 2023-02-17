@@ -1,13 +1,21 @@
 # Nest
 Nest Thermostat Data to CHORDS
 
+***02/17/2023: It looks like they have really improved the GCP provisioning process. These instructions
+may need to be rewritten (after testing the current GCP scheme).***
+
+***When accessing your GCP account, make sure that you are authorized on the correct Google account.
+Often when opening a new tab, the browser will switch back to a different account (perhaps the first one
+opened?), and you can't seem to change it. I had to log out of all Google accounts in the browser,
+and log in on the one that I needed.***
+
 - This uses the Google Cloud API to drag data from a Nest thermostat and 
   send it into a [CHORDS portal](https://earthcubeprojects-chords.github.io/chords-docs/). The Nest access is managed through "Google Cloud Platform".
 - Note: the Nest API was migrated from the Nest company to the Google API
   sometime in 2020, so disregard anything you see on the Internet about
   "Works With Nest".
 - The Google API ecosystem is wide and deep, and it took a lot of work to figure it out.
-  The biggest challenge was getting the OAuth2 authentication going. Programatically managing authorization codes and so on for OAuth2 is non-trivial. 
+  The biggest challenge was getting the OAuth2 authentication going. Programatically managing authorization codes and so on for OAuth2 is non-trivial.
 
 ## Developer
 You will need to [register as a Google developer](https://developers.google.com/nest/device-access/registration), $5.
@@ -23,9 +31,9 @@ Here are Google Nest Thermostat [traits and settable modes](https://developers.g
 ## Workflow
 This is the workflow to make this all work:
 
-1. Create a new project on [Google Cloud Platform](https://console.cloud.google.com), 
+1. Create a new project on [Google Cloud Platform](https://console.cloud.google.com/device-access), 
    configuring OAuth2 credentials, and enabling the Smart Device Management (SDM) API.
-1. Use the [Google Device Access Console](https:/console.nest.google.com) to
+1. Use the [Google Device Access Console](https:/console.nest.google.com/device-access) to
    give access to the Google API.
 1. Create a URL which is used to get an authorization code for Nest. This
    is done with the `--new` option to `nest.py`.
