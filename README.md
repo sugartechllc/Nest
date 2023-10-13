@@ -28,7 +28,9 @@ His step-by-step for [creating a Google project](https://www.wouternieuwerth.nl/
 His [material](https://colab.research.google.com/github/WouterNieuwerth/Google-Nest-thermostat-API-example/blob/main/Google_Nest_API_thermostat_example.ipynb) on Github.
 
 This [link](https://geoffhudik.com/tech/2023/03/04/trying-google-nest-api-with-postman-and-python/) has nice step-by-step
-instructions for working with the Google `SDM` system. It looks similar to what I've documented here.
+instructions for working with the Google `SDM` system. It looks similar to what I've documented here. It also
+demonstrates using [Postman](https://www.postman.com/), which is some sort of API service. Will need
+to look into Postman.
 
 Here are Google Nest Thermostat [traits and settable modes](https://developers.google.com/nest/device-access/api/thermostat?hl=en_US).
 ## Workflow
