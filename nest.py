@@ -73,7 +73,7 @@ def get_structures():
   if VERBOSE:
     print(json.dumps(response.json(), indent = 2, separators=(',', ': ')))
 
-def get_devices():
+def get_device_traits():
   # Get devices
   url_get_devices = 'https://smartdevicemanagement.googleapis.com/v1/enterprises/' + CONFIG['nest']['nest_console_project_id'] + '/devices'
   headers = {
@@ -84,50 +84,49 @@ def get_devices():
   if VERBOSE:
     print(json.dumps(response.json(), indent = 2, separators=(',', ': ')))
   response_json = response.json()
-  device_0_name = response_json['devices'][0]['name']
-  if VERBOSE:
-    print(device_0_name)
-  return device_0_name
+  if 'error' in response_json:
+    print('Error getting devices: ' + response_json['error']['message'])
+    sys.exit(1)
 
-def get_device_traits(device_name):
+  traits_all_devices = []
   time_stamp = datetime.now(timezone.utc).isoformat()[:-10]+'Z'
-  # Get device stats
-  url_get_device = 'https://smartdevicemanagement.googleapis.com/v1/' + device_name
-  headers = {
-      'Content-Type': 'application/json',
-      'Authorization': CONFIG['nest']['access_token'],
-  }
-  response = requests.get(url_get_device, headers=headers)
+
+  for device in response_json['devices']:
+    if VERBOSE:
+      print('Device: ', device['parentRelations'][0]['displayName'])
+
+    traits = {}
+    traits['displayName'] = device['parentRelations'][0]['displayName']
+    traits['time'] = time_stamp
+    traits['RH']  = device['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent']
+    traits['mode'] = device['traits']['sdm.devices.traits.ThermostatMode']['mode']
+    traits['status'] = device['traits']['sdm.devices.traits.ThermostatHvac']['status']
+
+    heatSetpt = device['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('heatCelsius')
+    if heatSetpt:
+        traits['heatSetpt'] = heatSetpt
+    coolSetpt = device['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('coolCelsius')
+    if coolSetpt:
+        traits['coolSetpt'] = coolSetpt
+
+    traits['tempC'] = device['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius']
+
+    traits['ecomode'] = device['traits']['sdm.devices.traits.ThermostatEco']['mode']
+
+    heatCelsius = device['traits']['sdm.devices.traits.ThermostatEco'].get('heatCelsius')
+    if heatCelsius:
+        traits['heatCelsius'] = heatCelsius
+    coolCelsius = device['traits']['sdm.devices.traits.ThermostatEco'].get('coolCelsius')
+    if coolCelsius:
+        traits['coolCelsius'] = coolCelsius
+
+    traits_all_devices.append(traits)
+
   if VERBOSE:
-    print(json.dumps(response.json(), indent = 2, separators=(',', ': ')))
+    print('All devices traits:')
+    print(traits_all_devices)
 
-  response_json = response.json()
-  retval = {}
-  retval['displayName'] = response_json['parentRelations']['displayName']
-  retval['time'] = time_stamp
-  retval['RH']  = response_json['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent']
-  retval['mode'] = response_json['traits']['sdm.devices.traits.ThermostatMode']['mode']
-  retval['status'] = response_json['traits']['sdm.devices.traits.ThermostatHvac']['status']
-
-  heatSetpt = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('heatCelsius')
-  if heatSetpt:
-    retval['heatSetpt'] = heatSetpt
-  coolSetpt = response_json['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('coolCelsius')
-  if coolSetpt:
-    retval['coolSetpt'] = coolSetpt
-
-  retval['tempC'] = response_json['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius']
-
-  retval['ecomode'] = response_json['traits']['sdm.devices.traits.ThermostatEco']['mode']
-
-  heatCelsius = response_json['traits']['sdm.devices.traits.ThermostatEco'].get('heatCelsius')
-  if heatCelsius:
-    retval['heatCelsius'] = heatCelsius
-  coolCelsius = response_json['traits']['sdm.devices.traits.ThermostatEco'].get('coolCelsius')
-  if coolCelsius:
-    retval['coolCelsius'] = coolCelsius
-
-  return retval
+  return traits_all_devices
 
 def nest_to_chords(nest_traits):
   '''
@@ -335,14 +334,6 @@ if __name__ == '__main__':
     print('The refreshed tokens')
     print_config()
 
-  # Get the avaiable Nest structures.
-  # Enable verbose to view them.
-  get_structures()
-
-  # Get the Nest devices. For now we will just use the first one listed.
-  # Turn on verbose to list all of them.
-  device_name = get_devices()
-
   # Start the CHORDS sender thread
   tochords.startSender()
 
@@ -351,21 +342,28 @@ if __name__ == '__main__':
     # Sleep until the next reporting time
     mod_sleep(report_interval)
 
-    nest_traits = get_device_traits(device_name)
-    print(nest_traits)
-    chords_traits = nest_to_chords(nest_traits)
+    # get the data for all devices
+    nest_traits = get_device_traits()
 
-    # Make a chords variable dict to send to chords
-    chords_record = make_chords_vars(chords_traits, new_keys)
-    # Merge in the chords options
-    chords_record.update(CONFIG['chords'])
-    # create the chords uri
-    uri = tochords.buildURI(CONFIG['chords']['host'], chords_record)
-    print(uri)
+    for nest_trait in nest_traits:
+      display_name = nest_trait['displayName']
+      if display_name in CONFIG['chords']['devices'] and CONFIG['chords']['devices'][display_name]['enabled']:
+        print('Sending data for', display_name)
+        chords_traits = nest_to_chords(nest_trait)
 
-    # Send it to chords
-    if not TEST:
-      tochords.submitURI(uri, 10*24*60)
+        # Make a chords variable dict to send to chords
+        chords_record = make_chords_vars(chords_traits, new_keys)
+        # Merge in the chords options
+        chords_record.update(CONFIG['chords'])
+        chords_record['inst_id'] = CONFIG['chords']['devices'][display_name]['inst_id']
+        # create the chords uri
+        uri = tochords.buildURI(CONFIG['chords']['host'], chords_record)
+        print(uri)
+
+        # Send it to chords
+        if not TEST:
+          tochords.submitURI(uri, 10*24*60)
+          # Sleep a bit to avoid flooding the server
+          time.sleep(1)
 
     token_renew(args.config_file)
-
