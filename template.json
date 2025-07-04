@@ -10,7 +10,6 @@
     "api_key": "CHORDS user api key",
     "host": "The CHORDS host",
     "enabled": true,
-    "inst_id": "instrument-id (number)",
     "devices": {
       "Living Room": {
         "enabled": true,
