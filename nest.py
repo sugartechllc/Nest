@@ -103,6 +103,7 @@ def get_device_traits(device_name):
 
   response_json = response.json()
   retval = {}
+  retval['displayName'] = response_json['parentRelations']['displayName']
   retval['time'] = time_stamp
   retval['RH']  = response_json['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent']
   retval['mode'] = response_json['traits']['sdm.devices.traits.ThermostatMode']['mode']
