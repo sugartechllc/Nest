@@ -1,6 +1,10 @@
 # Nest
 Nest Thermostat Data to CHORDS
 
+***04/07/2025: The [Getting Started Guide](https://developers.google.com/nest/device-access/get-started) 
+for Google device access seems to have been greatly improved. I think that it
+succintly describes the process which is documented below.***
+
 ***02/17/2023: It looks like they have really improved the GCP provisioning process. These instructions
 may need to be rewritten (after testing the current GCP scheme).***
 
