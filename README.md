@@ -7,10 +7,10 @@ succinctly describes the process which is documented below.***
 
 ***04/07/2025: I struggled to add new Nest devices to become visible to the api. Only after I followed
  step-by-step the [Getting Started Guide](https://developers.google.com/nest/device-access/get-started),
- did I find out how. It took me too a Google page where the new devices were listed, and a toggle
+ did I find out how. It took me to a Google page where the new devices were listed, and a toggle
  had to be enabled so that they would be visible on the `devices/` endpoint. I had been neglecting to 
- copy the URLs into the browser and run them there. Also, use Chrome. It is much better
- integrated into the Google ecosystem.***
+ copy the URLs into the browser and run them there. Also, use Chrome. It is integrated much better
+ into the Google ecosystem.***
 
 ***02/17/2023: It looks like they have really improved the GCP provisioning process. These instructions
 may need to be rewritten (after testing the current GCP scheme).***
