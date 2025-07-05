@@ -208,7 +208,9 @@ def arg_parse():
   global VERBOSE
   global TEST
 
-  parser = argparse.ArgumentParser(description='Nest to CHORDS.')
+  epilog = "NOTE: This program rewrites the configuration file every time the access token is renewed!"
+  
+  parser = argparse.ArgumentParser(description='Nest to CHORDS.', epilog=epilog)
 
   parser.add_argument('config_file', 
                       help='the configuration file')
@@ -241,6 +243,11 @@ def print_config():
   print()
 
 def token_renew(config_file_name):
+  '''Renew the access toekn.
+
+  NOTE THAT THIS FUNCTION REWRITES THE CONFIGURATION FILE!
+  '''
+  
   if not hasattr(token_renew,"last_renew_time"):
       token_renew.last_renew_time=None
 
