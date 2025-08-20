@@ -294,8 +294,10 @@ def make_chords_vars(old_hash, replace_keys):
     """
     new_hash = {}
     for old_key, old_val in old_hash.items():
+        # Convert the value to a string with 4 significant digits
+        new_val = "{:.4g}".format(float(old_val))
         if old_key in replace_keys:
-            new_hash[replace_keys[old_key]] = old_val
+            new_hash[replace_keys[old_key]] = new_val
 
     # The chords library wants the vars in a separate dict
     new_hash = {"vars": new_hash}
