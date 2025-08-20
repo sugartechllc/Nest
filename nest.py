@@ -13,6 +13,18 @@ CONFIG = {}
 VERBOSE = False
 TEST=False
 
+def set_sig_digits(value, digits=4):
+    """
+    Set the number of significant digits in a string containing a float value.
+    """
+    if isinstance(value, str):
+        try:
+            float_value = float(value)
+            return "{:.{}g}".format(float_value, digits)
+        except ValueError:
+            return value
+    return value
+
 def generate_login_url():
   url = 'https://nestservices.google.com/partnerconnections/'+ \
     CONFIG['nest']['nest_console_project_id']+'/auth?redirect_uri='+ \
@@ -98,27 +110,27 @@ def get_device_traits():
     traits = {}
     traits['displayName'] = device['parentRelations'][0]['displayName']
     traits['time'] = time_stamp
-    traits['RH']  = device['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent']
+    traits['RH']  = set_sig_digits(device['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent'])
     traits['mode'] = device['traits']['sdm.devices.traits.ThermostatMode']['mode']
     traits['status'] = device['traits']['sdm.devices.traits.ThermostatHvac']['status']
 
     heatSetpt = device['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('heatCelsius')
     if heatSetpt:
-        traits['heatSetpt'] = heatSetpt
+        traits['heatSetpt'] = set_sig_digits(heatSetpt)
     coolSetpt = device['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('coolCelsius')
     if coolSetpt:
-        traits['coolSetpt'] = coolSetpt
+        traits['coolSetpt'] = set_sig_digits(coolSetpt)
 
-    traits['tempC'] = device['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius']
+    traits['tempC'] = set_sig_digits(device['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius'])
 
     traits['ecomode'] = device['traits']['sdm.devices.traits.ThermostatEco']['mode']
 
     heatCelsius = device['traits']['sdm.devices.traits.ThermostatEco'].get('heatCelsius')
     if heatCelsius:
-        traits['heatCelsius'] = heatCelsius
+        traits['heatCelsius'] = set_sig_digits(heatCelsius)
     coolCelsius = device['traits']['sdm.devices.traits.ThermostatEco'].get('coolCelsius')
     if coolCelsius:
-        traits['coolCelsius'] = coolCelsius
+        traits['coolCelsius'] = set_sig_digits(coolCelsius)
 
     traits_all_devices.append(traits)
 
@@ -294,10 +306,8 @@ def make_chords_vars(old_hash, replace_keys):
     """
     new_hash = {}
     for old_key, old_val in old_hash.items():
-        # Convert the value to a string with 4 significant digits
-        new_val = "{:.4g}".format(float(old_val))
         if old_key in replace_keys:
-            new_hash[replace_keys[old_key]] = new_val
+            new_hash[replace_keys[old_key]] = old_val
 
     # The chords library wants the vars in a separate dict
     new_hash = {"vars": new_hash}
