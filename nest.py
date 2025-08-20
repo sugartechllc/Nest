@@ -13,17 +13,17 @@ CONFIG = {}
 VERBOSE = False
 TEST=False
 
-def set_sig_digits(value, digits=4):
+def round_to_num_decimals(value=float, digits=2):
     """
-    Set the number of significant digits in a string containing a float value.
+    Set the number of significant digits a float value.
     """
-    if isinstance(value, str):
-        try:
-            float_value = float(value)
-            return "{:.{}g}".format(float_value, digits)
-        except ValueError:
-            return value
-    return value
+    if value is None:
+        return None
+    if value == 0:
+        return 0.0
+    if value < 0:
+        return -round(abs(value), digits)
+    return round(value, digits)
 
 def generate_login_url():
   url = 'https://nestservices.google.com/partnerconnections/'+ \
@@ -110,27 +110,27 @@ def get_device_traits():
     traits = {}
     traits['displayName'] = device['parentRelations'][0]['displayName']
     traits['time'] = time_stamp
-    traits['RH']  = set_sig_digits(device['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent'])
+    traits['RH']  = round_to_num_decimals(device['traits']['sdm.devices.traits.Humidity']['ambientHumidityPercent'])
     traits['mode'] = device['traits']['sdm.devices.traits.ThermostatMode']['mode']
     traits['status'] = device['traits']['sdm.devices.traits.ThermostatHvac']['status']
 
     heatSetpt = device['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('heatCelsius')
     if heatSetpt:
-        traits['heatSetpt'] = set_sig_digits(heatSetpt)
+        traits['heatSetpt'] = round_to_num_decimals(heatSetpt)
     coolSetpt = device['traits']['sdm.devices.traits.ThermostatTemperatureSetpoint'].get('coolCelsius')
     if coolSetpt:
-        traits['coolSetpt'] = set_sig_digits(coolSetpt)
+        traits['coolSetpt'] = round_to_num_decimals(coolSetpt)
 
-    traits['tempC'] = set_sig_digits(device['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius'])
+    traits['tempC'] = round_to_num_decimals(device['traits']['sdm.devices.traits.Temperature']['ambientTemperatureCelsius'])
 
     traits['ecomode'] = device['traits']['sdm.devices.traits.ThermostatEco']['mode']
 
     heatCelsius = device['traits']['sdm.devices.traits.ThermostatEco'].get('heatCelsius')
     if heatCelsius:
-        traits['heatCelsius'] = set_sig_digits(heatCelsius)
+        traits['heatCelsius'] = round_to_num_decimals(heatCelsius)
     coolCelsius = device['traits']['sdm.devices.traits.ThermostatEco'].get('coolCelsius')
     if coolCelsius:
-        traits['coolCelsius'] = set_sig_digits(coolCelsius)
+        traits['coolCelsius'] = round_to_num_decimals(coolCelsius)
 
     traits_all_devices.append(traits)
 
