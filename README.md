@@ -1,6 +1,16 @@
 # Nest
 Nest Thermostat Data to CHORDS
 
+***09/27/2025: Even though the Nest app registers a new thermostat, and you
+can see it on Google Home, it is still not authorized with the Google cloud
+API service. So, to enable a new device in the Google Cloud Console, do the
+following in a CHROME browser:***
+
+1. Got to [Authorize an Account](https://developers.google.com/nest/device-access/authorize).
+1. Scroll down to "Link your account", and edit *project-id* and *oauth2-client-id*. You will find these in _nest.json_.
+1. Paste into a new tab and hit return. Choose the correct account.
+1. You should get to a page with "Google Nest Permissions. Enable the new device here. Toggle the device on.
+
 ***04/07/2025: The [Getting Started Guide](https://developers.google.com/nest/device-access/get-started) 
 for Google device access seems to have been greatly improved. I think that it
 succinctly describes the process which is documented below.***
